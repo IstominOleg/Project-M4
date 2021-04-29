@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Header from '../../components/Header/Header';
 import './ListPage.css';
 
 
@@ -6,38 +7,50 @@ import './ListPage.css';
 
 export default class ListPage extends Component {
     state = {
-        movies: [
-            // { title: 'The Godfather', year: 1972, imdbID: 'tt0068646' }
-        ]
+        movies: [],
+        title: '',
     }
-    fetchFuncList = () => {
-        // let name = this.state.searchLine.trim();;
-        fetch(`https://acb-api.algoritmika.org/api/movies/list/d7ddc381-e740-41ea-9d9d-db5a85e75a36`)
+    fetchMovie = (imdbID) => {
+        return fetch(`http://www.omdbapi.com/?i=${imdbID}&apikey=89fb182b`)
+                .then(res => res.json())
+    }
+    fetchFuncList = (id) => {
+        fetch(`https://acb-api.algoritmika.org/api/movies/list/${id}`)
         .then(res => res.json())
         .then(data => {console.log(data);
-            // this.setState({movies: data.Search})
+            this.setState({title: data.title})
+            let mov = data.movies.map((imdbID) => {
+                return this.fetchMovie(imdbID)
+            })
+            return Promise.all(mov)
+        }).then((arrMovies) => {
+            console.log(arrMovies);
+            this.setState( {movies: arrMovies} )
         })
     }
     componentDidMount() {
-        this.fetchFuncList()
-        // const id = this.props.match.params;
-        // console.log(id);
+        const id = this.props.match.params.id;
+        this.fetchFuncList(id)
+        console.log(id);
         // TODO: запрос к сервер на получение списка
         // TODO: запросы к серверу по всем imdbID
     }
     render() { 
         return (
             <div className="list-page">
-                <h1 className="list-page__title">Мой список</h1>
-                <ul>
-                    {this.state.movies.map((item) => {
-                        return (
-                            <li key={item.imdbID}>
-                                <a href="https://www.imdb.com/title/tt0068646/" target="_blank">{item.title} ({item.year})</a>
-                            </li>
-                        );
-                    })}
-                </ul>
+                <Header />
+                <main className="list-page__content">
+                    <h1 className="list-page__title">{this.state.title}</h1>
+                    <ul>
+                        {this.state.movies.map((item) => {
+                            return (
+                                <li key={item.imdbID}>
+                                    <a href={`https://www.imdb.com/title/${item.imdbID}`} target="_blank">{item.Title} ({item.Year})</a>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </main>
             </div>
         );
     }

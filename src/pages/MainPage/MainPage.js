@@ -12,7 +12,6 @@ class MainPage extends Component {
         favoritesMovies: [],
         title: '',
         inputActiv: true,
-        inActiv: true,
     } 
 
     searchLineChangeHandler = (e) => {
@@ -33,11 +32,16 @@ class MainPage extends Component {
         fetch(`http://www.omdbapi.com/?s=${name}&apikey=89fb182b`)
         .then(res => res.json())
         .then(data => {
-            this.setState({movies: data.Search})
+            let moviesSearch = data.Search;
+            if (moviesSearch) {
+                moviesSearch = moviesSearch.filter((elem, idx, arr) => {
+                    return idx === arr.findIndex((el) => {
+                        return el.imdbID === elem.imdbID
+                    })
+                })
+            }
+            this.setState({movies: moviesSearch})
         })
-    }
-    titleListChange = (ev) => {
-        this.setState({ title: ev.target.value });
     }
     deleteElementList = (imdbID) => {
         let newFavoritesMovies = this.state.favoritesMovies.filter(obj => {
@@ -45,26 +49,6 @@ class MainPage extends Component {
         })
         this.setState({ favoritesMovies: newFavoritesMovies });
         
-    }
-    newTitleList = () => {
-        this.setState({ inputActiv: true, inActiv: false });
-        // https://acb-api.algoritmika.org/api/movies/list
-        const info = {
-            title: this.state.title,
-            movies: [this.state.favoritesMovies],
-        }
-          fetch('https://acb-api.algoritmika.org/api/movies/list', {
-            method: 'POST',
-            headers: {
-              'Content-type': 'application/json'
-            },
-            body: JSON.stringify(info)
-          })
-          .then(res => res.json())
-          .then(data => {
-              console.log(data);
-            //   this.setState({movies: data.Search})
-          });
     }
     render() { 
         return (
@@ -89,10 +73,8 @@ class MainPage extends Component {
                     <aside className="main-page__favorites">
                         <Favorites 
                         movies={this.state.favoritesMovies}
-                        titleList={this.state.title}
-                        titleListChange={this.titleListChange}
+                        // titleList={this.state.title}
                         deleteItemList={this.deleteElementList}
-                        newTitle={this.newTitleList}
                         inputActiv={this.state.inputActiv}
                         inActiv={this.state.inActiv}
                         />
